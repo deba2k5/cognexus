@@ -12,20 +12,32 @@ comparable to larger models by exploring multiple paths and self-evaluating.
 
 from __future__ import annotations
 import asyncio
+import copy
 import logging
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from enum import Enum
 
-from ..core.types import (
-    Thought,
-    ThoughtTree,
-    ThoughtStatus,
-    PageObservation,
-    AgentContext,
-)
-from ..core.config import AWEConfig
+try:
+    from ..core.types import (
+        Thought,
+        ThoughtTree,
+        ThoughtStatus,
+        PageObservation,
+        AgentContext,
+    )
+    from ..core.config import AWEConfig
+except (ImportError, ValueError):
+    # Fallback for standalone execution or testing
+    from core.types import (
+        Thought,
+        ThoughtTree,
+        ThoughtStatus,
+        PageObservation,
+        AgentContext,
+    )
+    from core.config import AWEConfig
 
 
 logger = logging.getLogger(__name__)
@@ -40,6 +52,7 @@ class SearchStrategy(str, Enum):
     BFS = "bfs"      # Breadth-first: explore all thoughts at depth d before d+1
     DFS = "dfs"      # Depth-first: explore one path fully, then backtrack
     BEAM = "beam"    # Beam search: keep top-k paths at each depth
+    ALL = "all"      # Run all strategies and pick the best
 
 
 # =============================================================================
@@ -492,10 +505,13 @@ class ToTEngine:
             self.tree.add_thought(thought)
         
         # Explore based on strategy
+        # Explore based on strategy
         if self.config.tot_search_strategy == SearchStrategy.BFS.value:
             best = await self._explore_bfs(context, observation)
         elif self.config.tot_search_strategy == SearchStrategy.DFS.value:
             best = await self._explore_dfs(context, observation)
+        elif self.config.tot_search_strategy == SearchStrategy.ALL.value:
+            best = await self._explore_all_strategies(context, observation, evaluated)
         else:  # beam
             best = await self._explore_beam(context, observation)
         
@@ -725,3 +741,86 @@ Provide 2-3 key insights for improving future explorations.
         except Exception as e:
             logger.warning(f"Reflection failed: {e}")
             return ""
+
+    async def _explore_all_strategies(
+        self,
+        context: AgentContext,
+        observation: PageObservation,
+        initial_thoughts: List[Thought],
+    ) -> Thought:
+        """
+        Run ALL strategies and pick the best one.
+        
+        This runs BFS, DFS, and Beam search sequentially, each starting
+        from a fresh state with the initial thoughts.
+        """
+        # Define strategies to run
+        # We need to map the enum values to the actual methods
+        strategies = [
+            (SearchStrategy.BFS, self._explore_bfs),
+            (SearchStrategy.DFS, self._explore_dfs),
+            (SearchStrategy.BEAM, self._explore_beam),
+        ]
+        
+        results = []
+        
+        # We need to deeply copy thoughts to ensure each strategy starts fresh
+        # But Thought objects might not be easily deep-copyable if they contain complex objects
+        # Luckily Thought is a dataclass with mostly primitive types
+        
+        for strategy_name, strategy_method in strategies:
+            logger.info(f"--- Running Strategy: {strategy_name.value.upper()} ---")
+            
+            # Reset tree for this run
+            self.tree = ThoughtTree()
+            self._best_result = None
+            
+            # Add deep copies of initial thoughts to ensure isolation
+            for thought in initial_thoughts:
+                try:
+                    # Create a fresh copy
+                    t_copy = copy.deepcopy(thought)
+                    # Reset status if it was changed (though it shouldn't be for initial thoughts)
+                    if t_copy.status != ThoughtStatus.PENDING:
+                        t_copy.status = ThoughtStatus.PENDING
+                    self.tree.add_thought(t_copy)
+                except Exception as e:
+                    logger.warning(f"Failed to copy thought: {e}, using original")
+                    self.tree.add_thought(thought)
+            
+            # Run exploration
+            try:
+                best_thought = await strategy_method(context, observation)
+                
+                # Store result
+                results.append({
+                    "strategy": strategy_name.value,
+                    "thought": best_thought,
+                    "score": best_thought.score,
+                    "result": self._best_result,
+                    "status": best_thought.status
+                })
+                
+                logger.info(f"Strategy {strategy_name.value} finished. Best score: {best_thought.score:.2f}")
+                
+            except Exception as e:
+                logger.error(f"Strategy {strategy_name.value} failed: {e}")
+        
+        if not results:
+            logger.error("All strategies failed")
+            return initial_thoughts[0] if initial_thoughts else None
+            
+        # Select best overall
+        # Prioritize SUCCEEDED thoughts, then highest score
+        def score_result(r):
+            status_score = 100.0 if r["thought"].status == ThoughtStatus.SUCCEEDED else 0.0
+            return status_score + r["score"]
+            
+        best = max(results, key=score_result)
+        
+        logger.info(f"🏆 Winning Strategy: {best['strategy'].upper()} (Score: {best['score']:.2f})")
+        
+        # Restore the best result state
+        self._best_result = best["result"]
+        
+        return best["thought"]

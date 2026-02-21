@@ -96,18 +96,18 @@ export default function DemoSection() {
         <section id="demo" className="py-32 px-6">
             <div className="max-w-5xl mx-auto">
                 <div className="text-center mb-12">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-purple-500/30 bg-purple-500/10 mb-6">
-                        <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                        <span className="text-sm text-purple-300">
-                            Tree of Thought + SLM • Multi-Strategy Extraction
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-500/20 bg-cyan-500/5 mb-6">
+                        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                        <span className="text-sm text-cyan-300 font-medium">
+                            CogNexus • Tree of Thought + SLM Extraction
                         </span>
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                    <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
                         <span className="gradient-text">Live Fetch</span> with ToT Reasoning
                     </h2>
                     <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-                        Uses Tree of Thought reasoning to generate multiple extraction strategies,
-                        evaluate each approach, and pick the best one – enabling small models to perform like large ones.
+                        CogNexus uses Tree of Thought reasoning to generate multiple extraction strategies,
+                        evaluate each approach, and pick the best one — enabling small models to perform like large ones.
                     </p>
                 </div>
 
@@ -123,18 +123,18 @@ export default function DemoSection() {
                         <button
                             onClick={checkApiStatus}
                             className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-all ${apiStatus === "online"
-                                    ? "bg-green-500/20 text-green-400"
-                                    : apiStatus === "offline"
-                                        ? "bg-red-500/20 text-red-400"
-                                        : "bg-gray-500/20 text-gray-400 hover:bg-gray-500/30"
+                                ? "bg-green-500/20 text-green-400"
+                                : apiStatus === "offline"
+                                    ? "bg-red-500/20 text-red-400"
+                                    : "bg-gray-500/20 text-gray-400 hover:bg-gray-500/30"
                                 }`}
                         >
                             <span
                                 className={`w-2 h-2 rounded-full ${apiStatus === "online"
-                                        ? "bg-green-400 animate-pulse"
-                                        : apiStatus === "offline"
-                                            ? "bg-red-400"
-                                            : "bg-gray-400"
+                                    ? "bg-green-400 animate-pulse"
+                                    : apiStatus === "offline"
+                                        ? "bg-red-400"
+                                        : "bg-gray-400"
                                     }`}
                             />
                             {apiStatus === "unknown" ? "Check Status" : apiStatus.toUpperCase()}
@@ -267,10 +267,10 @@ export default function DemoSection() {
                                         <div
                                             key={i}
                                             className={`p-3 rounded-lg text-sm ${s.status === "succeeded"
-                                                    ? "bg-green-500/10 border border-green-500/30"
-                                                    : s.status === "failed"
-                                                        ? "bg-red-500/10 border border-red-500/30"
-                                                        : "bg-gray-500/10 border border-gray-500/30"
+                                                ? "bg-green-500/10 border border-green-500/30"
+                                                : s.status === "failed"
+                                                    ? "bg-red-500/10 border border-red-500/30"
+                                                    : "bg-gray-500/10 border border-gray-500/30"
                                                 }`}
                                         >
                                             <div className="flex items-center justify-between">
@@ -338,7 +338,7 @@ export default function DemoSection() {
                     <div className="p-6 rounded-xl border border-purple-500/10">
                         <div className="text-2xl mb-3">🤏</div>
                         <h4 className="font-semibold text-white mb-2">SLM Optimized</h4>
-                        <p className="text-sm text-gray-400">Works great with 8B models like llama-3.1-8b-instant.</p>
+                        <p className="text-sm text-gray-400">Works great with 8B models via CogNexus engine.</p>
                     </div>
                     <div className="p-6 rounded-xl border border-purple-500/10">
                         <div className="text-2xl mb-3">⚡</div>

@@ -77,27 +77,43 @@ class ExtractionThought:
 # Groq API Client
 # =============================================================================
 
-async def call_groq(prompt: str, temperature: float = 0.3, max_tokens: int = 4096) -> str:
-    """Call Groq API for LLM completion."""
+async def call_groq(prompt: str, temperature: float = 0.3, max_tokens: int = 4096, max_retries: int = 3) -> str:
+    """Call Groq API for LLM completion with retry on rate limits."""
     if not GROQ_API_KEY:
         raise ValueError("GROQ_API_KEY not set")
     
-    async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.post(
-            f"{GROQ_BASE_URL}/chat/completions",
-            headers={
-                "Authorization": f"Bearer {GROQ_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": MODEL_NAME,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": temperature,
-                "max_tokens": max_tokens,
-            }
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
+    logger.info(f"Calling Groq API with model={MODEL_NAME}, prompt_len={len(prompt)}, temp={temperature}")
+    
+    for attempt in range(max_retries):
+        async with httpx.AsyncClient(timeout=90) as client:
+            response = await client.post(
+                f"{GROQ_BASE_URL}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": MODEL_NAME,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                }
+            )
+            
+            if response.status_code == 429:
+                # Rate limited — wait and retry with exponential backoff
+                wait_time = (2 ** attempt) * 2  # 2s, 4s, 8s
+                logger.warning(f"Rate limited (429). Waiting {wait_time}s before retry {attempt+1}/{max_retries}...")
+                await asyncio.sleep(wait_time)
+                continue
+            
+            if response.status_code != 200:
+                logger.error(f"Groq API error {response.status_code}: {response.text[:500]}")
+                response.raise_for_status()
+            
+            return response.json()["choices"][0]["message"]["content"]
+    
+    raise Exception(f"Groq API rate limited after {max_retries} retries")
 
 
 # =============================================================================
@@ -263,9 +279,14 @@ async def evaluate_thoughts(
     thoughts: List[ExtractionThought],
     content: str,
 ) -> List[ExtractionThought]:
-    """Evaluate all thoughts in parallel."""
-    tasks = [evaluate_thought(t, content) for t in thoughts]
-    return await asyncio.gather(*tasks)
+    """Evaluate thoughts sequentially to avoid rate limits."""
+    evaluated = []
+    for t in thoughts:
+        result = await evaluate_thought(t, content)
+        evaluated.append(result)
+        # Small delay between evaluations to avoid rate limits
+        await asyncio.sleep(1)
+    return evaluated
 
 
 # =============================================================================
@@ -306,10 +327,30 @@ async def execute_thought(
     try:
         response = await call_groq(prompt, temperature=0.1)
         
-        # Parse JSON
-        json_match = re.search(r'\[[\s\S]*\]', response)
+        # Parse JSON — handle extra text around JSON arrays
+        json_match = re.search(r'\[\s*\{', response)
         if json_match:
-            data = json.loads(json_match.group())
+            # Find the start of the JSON array
+            json_start = json_match.start()
+            # Try to find the matching end bracket
+            bracket_count = 0
+            json_end = json_start
+            for i in range(json_start, len(response)):
+                if response[i] == '[':
+                    bracket_count += 1
+                elif response[i] == ']':
+                    bracket_count -= 1
+                    if bracket_count == 0:
+                        json_end = i + 1
+                        break
+            
+            try:
+                data = json.loads(response[json_start:json_end])
+            except json.JSONDecodeError:
+                # Fallback: try regex approach
+                fallback_match = re.search(r'\[[\s\S]*?\](?=\s*$|\s*```)', response)
+                data = json.loads(fallback_match.group()) if fallback_match else []
+            
             if isinstance(data, list) and len(data) > 0:
                 thought.result = data
                 thought.status = ThoughtStatus.SUCCEEDED

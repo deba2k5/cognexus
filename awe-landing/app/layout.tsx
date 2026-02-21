@@ -34,6 +34,26 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        {/* Suppress errors from browser extensions (MetaMask, etc.) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('error', function(e) {
+                if (e.filename && e.filename.startsWith('chrome-extension://')) {
+                  e.stopImmediatePropagation();
+                  e.preventDefault();
+                }
+              });
+              window.addEventListener('unhandledrejection', function(e) {
+                var msg = e.reason && (e.reason.message || String(e.reason));
+                if (msg && (msg.includes('MetaMask') || msg.includes('chrome-extension'))) {
+                  e.stopImmediatePropagation();
+                  e.preventDefault();
+                }
+              });
+            `,
+          }}
+        />
         {children}
       </body>
     </html>

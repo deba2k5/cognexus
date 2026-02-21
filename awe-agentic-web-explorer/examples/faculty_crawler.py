@@ -17,6 +17,10 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load env from parent directory
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 # Add parent to path for imports
 import sys
@@ -184,14 +188,16 @@ async def main():
     # Custom configuration for WashU site
     config = AWEConfig(
         # LLM settings
-        model="gemma3:12b",  # Or your preferred model
+        model=os.getenv("MODEL_NAME", "llama-3.1-8b-instant"),
+        groq_api_key=os.getenv("GROQ_API_KEY"),
+        model_provider=os.getenv("MODEL_PROVIDER", "groq"),
         temperature=0.3,
         max_tokens=4096,
         
         # ToT settings
-        max_thoughts=5,
-        max_depth=3,
-        search_strategy="beam",  # More balanced exploration
+        tot_max_thoughts=5,
+        tot_max_depth=3,
+        tot_search_strategy="beam",  # More balanced exploration
         
         # Browser settings
         headless=False,  # Set True for production
@@ -202,12 +208,12 @@ async def main():
         
         # Learning settings
         learning_enabled=True,
-        min_examples_for_pattern=3,
+        # min_examples_for_pattern=3, # Removed as it is not in AWEConfig
         save_templates=True,
         
         # Reliability settings
         max_retries=3,
-        retry_delay=2.0,
+        retry_backoff=2.0,
     )
     
     # Progress display
