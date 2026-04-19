@@ -6,7 +6,7 @@
 
 const isProd = process.env.NODE_ENV === 'production';
 // If not set, it defaults to localhost in dev, and your Vercel backend in production
-const API_URL = process.env.NEXT_PUBLIC_API_URL || (isProd ? 'https://cognexus-backend.vercel.app' : 'http://localhost:8000');
+const API_URL = process.env.NEXT_PUBLIC_API_URL || (isProd ? 'https://cognexus-uvwl.vercel.app' : 'http://localhost:8000');
 
 export interface ExplorationRequest {
     url: string;
