@@ -55,6 +55,82 @@ export interface DemoResult {
     };
 }
 
+export interface SecurityResult {
+    url: string;
+    score: number;
+    grade: string;
+    checks: Array<{
+        check: string;
+        items: Array<{
+            severity: string;
+            message: string;
+            detail: string;
+        }>;
+    }>;
+    summary: {
+        critical: number;
+        warning: number;
+        info: number;
+        pass: number;
+    };
+    duration_seconds: number;
+    error?: string;
+}
+
+export interface VisualizationResult {
+    chart_type: string;
+    image_base64: string;
+    items_analyzed: number;
+    field?: string;
+    error?: string;
+}
+
+export interface StructureResult {
+    url: string;
+    score: number;
+    grade: string;
+    dom: {
+        max_depth: number;
+        total_elements: number;
+        unique_tags: number;
+        top_tags: Array<{ tag: string; count: number }>;
+        complexity: string;
+    };
+    headings: {
+        headings: Array<{ level: number; text: string; tag: string }>;
+        total_headings: number;
+        heading_counts: Record<string, number>;
+        issues: Array<{ severity: string; message: string }>;
+    };
+    links: {
+        total_links: number;
+        internal_links: number;
+        external_links: number;
+        anchor_links: number;
+        external_domains: Array<{ domain: string; count: number }>;
+    };
+    metadata: {
+        title: string | null;
+        description: string | null;
+        language: string | null;
+        open_graph: Record<string, string>;
+        seo_issues: Array<{ severity: string; message: string }>;
+    };
+    sitemap: {
+        total_paths: number;
+        max_depth: number;
+        tree: Array<{ path: string; depth: number; url: string; children_count: number }>;
+    };
+    resources: {
+        scripts: { external: number; inline: number; total: number };
+        stylesheets: { external: number; inline: number; total: number };
+        images: { total: number; missing_alt: number; accessibility_score: string };
+        iframes: number;
+    };
+    duration_seconds: number;
+    error?: string;
+}
+
 class AWEApiClient {
     private baseUrl: string;
 
@@ -143,6 +219,57 @@ class AWEApiClient {
     }
 
     /**
+     * Run security & vulnerability scan
+     */
+    async runSecurityScan(url: string, checkLinks: boolean = true): Promise<SecurityResult> {
+        const response = await fetch(`${this.baseUrl}/analyze/security`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, check_links: checkLinks }),
+        });
+        if (!response.ok) {
+            throw new Error(`Security scan failed: ${response.statusText}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Generate data visualization chart
+     */
+    async getVisualization(
+        data: Record<string, unknown>[],
+        chartType: string = 'dashboard',
+        field?: string,
+        title?: string,
+        url: string = ''
+    ): Promise<VisualizationResult> {
+        const response = await fetch(`${this.baseUrl}/analyze/visualize`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data, chart_type: chartType, field, title, url }),
+        });
+        if (!response.ok) {
+            throw new Error(`Visualization failed: ${response.statusText}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Analyze website structure
+     */
+    async analyzeStructure(url: string): Promise<StructureResult> {
+        const response = await fetch(`${this.baseUrl}/analyze/structure`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url }),
+        });
+        if (!response.ok) {
+            throw new Error(`Structure analysis failed: ${response.statusText}`);
+        }
+        return response.json();
+    }
+
+    /**
      * Get server configuration
      */
     async getConfig(): Promise<Record<string, unknown>> {
@@ -182,3 +309,4 @@ export const aweApi = new AWEApiClient();
 
 // Also export the class for custom configuration
 export { AWEApiClient };
+

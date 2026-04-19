@@ -90,6 +90,26 @@ class DemoRequest(BaseModel):
     quick_mode: bool = True
 
 
+class SecurityScanRequest(BaseModel):
+    """Request for security scan."""
+    url: str
+    check_links: bool = True
+
+
+class VisualizationRequest(BaseModel):
+    """Request for data visualization."""
+    data: List[Dict[str, Any]]
+    chart_type: str = "dashboard"  # bar, pie, completeness, words, dashboard
+    field: Optional[str] = None
+    title: Optional[str] = None
+    url: str = ""
+
+
+class StructureAnalysisRequest(BaseModel):
+    """Request for structure analysis."""
+    url: str
+
+
 class HealthResponse(BaseModel):
     """Health check response."""
     status: str
@@ -428,6 +448,75 @@ async def run_live_extraction(request: DemoRequest):
                 "duration_ms": 0,
                 "tot_enabled": TOT_ENABLED,
             }
+        }
+
+
+# =============================================================================
+# Analysis Endpoints
+# =============================================================================
+
+@app.post("/analyze/security")
+async def run_security_scan(request: SecurityScanRequest):
+    """
+    Run a security & vulnerability scan on a URL.
+    Checks SSL, security headers, broken links, mixed content, exposed secrets, and JS libraries.
+    """
+    try:
+        from security_scanner import scan_url
+        result = await scan_url(request.url, check_links=request.check_links)
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "url": request.url,
+            "error": str(e),
+            "checks": [],
+            "summary": {"critical": 0, "warning": 0, "info": 0, "pass": 0},
+        }
+
+
+@app.post("/analyze/visualize")
+async def run_visualization(request: VisualizationRequest):
+    """
+    Generate a visualization chart from extracted data.
+    Returns a base64-encoded PNG image.
+    """
+    try:
+        from visualization import generate_visualization
+        result = generate_visualization(
+            data=request.data,
+            chart_type=request.chart_type,
+            field=request.field,
+            title=request.title,
+            url=request.url,
+        )
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "error": str(e),
+            "chart_type": request.chart_type,
+            "image_base64": None,
+        }
+
+
+@app.post("/analyze/structure")
+async def run_structure_analysis(request: StructureAnalysisRequest):
+    """
+    Analyze website structure: DOM depth, headings, links, metadata, sitemap, resources.
+    """
+    try:
+        from structure_analyzer import analyze_structure
+        result = await analyze_structure(request.url)
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "url": request.url,
+            "error": str(e),
         }
 
 

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWE - Agentic Web Explorer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-row">
+        <div class="logo-icon">🧠</div>
+        <div>
+          <h1>AWE Explorer</h1>
+          <span class="subtitle">CogNexus • ToT + SLM</span>
+        </div>
+      </div>
+      <div class="status-badge" id="apiStatus">
+        <span class="status-dot"></span>
+        <span class="status-text">Checking...</span>
+      </div>
+    </div>
+
+    <!-- Current Page -->
+    <div class="current-url" id="currentUrl">Loading...</div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="extract">⚡ Extract</button>
+      <button class="tab-btn" data-tab="security">🛡️ Security</button>
+      <button class="tab-btn" data-tab="structure">🌐 Structure</button>
+    </div>
+
+    <!-- Extract Tab -->
+    <div class="tab-content active" id="tab-extract">
+      <button class="action-btn primary" id="btnExtract">
+        <span class="btn-icon">⚡</span>
+        Extract Data with ToT
+      </button>
+      <div class="results" id="extractResults"></div>
+    </div>
+
+    <!-- Security Tab -->
+    <div class="tab-content" id="tab-security">
+      <button class="action-btn security" id="btnSecurity">
+        <span class="btn-icon">🛡️</span>
+        Run Security Scan
+      </button>
+      <div class="results" id="securityResults"></div>
+    </div>
+
+    <!-- Structure Tab -->
+    <div class="tab-content" id="tab-structure">
+      <button class="action-btn structure" id="btnStructure">
+        <span class="btn-icon">🌐</span>
+        Analyze Structure
+      </button>
+      <div class="results" id="structureResults"></div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="spinner"></div>
+      <div class="loading-text" id="loadingText">Processing...</div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span>AWE v1.0</span>
+      <a href="http://localhost:3000" target="_blank">Open Dashboard →</a>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
