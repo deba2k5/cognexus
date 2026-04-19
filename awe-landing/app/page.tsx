@@ -188,7 +188,7 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-4">
             <a
-              href="https://github.com"
+              href="https://github.com/deba2k5/cognexus"
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#1a1a1a] hover:text-[#8b5cf6] transition-colors"
@@ -247,10 +247,10 @@ export default function Home() {
               Try Live Demo
               <span className="group-hover:translate-x-1 transition-transform"><ArrowRightIcon /></span>
             </a>
-            <button className="btn-secondary flex items-center gap-2 text-lg">
+            <a href="https://github.com/deba2k5/cognexus" target="_blank" rel="noopener noreferrer" className="btn-secondary flex items-center gap-2 text-lg">
               <GithubIcon />
               View on GitHub
-            </button>
+            </a>
           </div>
 
           {/* Code Preview */}
@@ -530,10 +530,10 @@ export default function Home() {
                 Read Documentation
                 <span className="group-hover:translate-x-1 transition-transform"><ArrowRightIcon /></span>
               </button>
-              <button className="btn-secondary flex items-center gap-2 text-lg">
+              <a href="https://github.com/deba2k5/cognexus" target="_blank" rel="noopener noreferrer" className="btn-secondary flex items-center gap-2 text-lg">
                 <GithubIcon />
                 Star on GitHub
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -556,7 +556,7 @@ export default function Home() {
           </p>
           <div className="flex items-center gap-6">
             <a href="#" className="text-[#1a1a1a] hover:text-[#8b5cf6] transition-colors text-sm font-bold uppercase">Docs</a>
-            <a href="#" className="text-[#1a1a1a] hover:text-[#8b5cf6] transition-colors text-sm font-bold uppercase">GitHub</a>
+            <a href="https://github.com/deba2k5/cognexus" target="_blank" rel="noopener noreferrer" className="text-[#1a1a1a] hover:text-[#8b5cf6] transition-colors text-sm font-bold uppercase">GitHub</a>
             <a href="#" className="text-[#1a1a1a] hover:text-[#8b5cf6] transition-colors text-sm font-bold uppercase">Twitter</a>
           </div>
         </div>
