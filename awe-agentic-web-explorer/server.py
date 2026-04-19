@@ -29,7 +29,7 @@ except ImportError:
 
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
 API_PORT = int(os.getenv("API_PORT", "8000"))
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://cognexus1.vercel.app").split(",")
 
 # LLM Configuration
 MODEL_NAME = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
