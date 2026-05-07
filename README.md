@@ -1,4 +1,4 @@
-# AWE - Agentic Web Explorer
+# AWE - Agentic Web Explorer Cognexus
 
 <div align="center">
 
