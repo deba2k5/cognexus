@@ -4,7 +4,10 @@
  * Handles tab switching, API calls, and results rendering.
  */
 
-const API_URL = 'http://localhost:8000';
+// Production backend by default. For local development against a
+// `uvicorn server:app` instance, change this to 'http://localhost:8000'
+// (and add the matching host_permissions entry in manifest.json).
+const API_URL = 'https://cognexus-uvwl.vercel.app';
 
 // ============================
 // Initialization
@@ -97,14 +100,16 @@ async function runExtraction() {
     const url = getUrl();
     if (!url || url === 'Loading...') return;
 
-    showLoading('Extracting with ToT...');
+    const query = document.getElementById('searchQuery').value.trim();
+
+    showLoading(query ? `Searching for "${query}"...` : 'Extracting with ToT...');
     const container = document.getElementById('extractResults');
 
     try {
         const res = await fetch(`${API_URL}/demo`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url, quick_mode: true }),
+            body: JSON.stringify({ url, quick_mode: true, query: query || undefined }),
         });
         const data = await res.json();
 
@@ -112,6 +117,10 @@ async function runExtraction() {
             container.innerHTML = renderError(data.message);
         } else {
             let html = '';
+
+            if (data.query) {
+                html += `<div class="data-item"><strong>🔎 Personalized for:</strong> "${data.query}"</div>`;
+            }
 
             // Stats
             const stats = data.stats || {};

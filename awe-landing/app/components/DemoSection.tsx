@@ -45,6 +45,7 @@ type AnalysisTab = "extract" | "security" | "charts" | "structure";
 
 export default function DemoSection() {
     const [url, setUrl] = useState("https://quotes.toscrape.com/");
+    const [query, setQuery] = useState("");
     const [fetchState, setFetchState] = useState<LiveFetchState>({ status: "idle" });
     const [apiStatus, setApiStatus] = useState<"unknown" | "online" | "offline">("unknown");
     const [showStrategies, setShowStrategies] = useState(false);
@@ -67,7 +68,7 @@ export default function DemoSection() {
         setFetchState({ status: "loading" });
         setShowStrategies(false);
         try {
-            const result = await aweApi.runDemo(url);
+            const result = await aweApi.runDemo(url, query);
             if (result.status === "error") {
                 setFetchState({ status: "error", error: result.message || "Extraction failed" });
             } else {
@@ -228,6 +229,26 @@ export default function DemoSection() {
                         />
                     </div>
 
+                    {/* Search Query Input (personalized extraction) */}
+                    {activeTab === "extract" && (
+                        <div className="mb-6">
+                            <label htmlFor="fetch-query" className="block text-sm text-[#1a1a1a] mb-2 font-bold uppercase tracking-wide">
+                                What do you want to find? <span className="text-[#999] normal-case font-medium">(optional)</span>
+                            </label>
+                            <input
+                                id="fetch-query"
+                                type="text"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                placeholder="e.g. quotes about love, pricing plans, contact emails..."
+                                className="w-full px-4 py-3 bg-white border-[3px] border-[#1a1a1a] text-[#1a1a1a] placeholder-[#999] focus:outline-none focus:shadow-[4px_4px_0px_#8b5cf6] transition-shadow font-mono text-sm font-bold"
+                            />
+                            <p className="text-xs text-[#666] mt-1 font-medium">
+                                Leave blank to extract everything, or describe what you&apos;re searching for to get a personalized extraction.
+                            </p>
+                        </div>
+                    )}
+
                     {/* Tab Navigation */}
                     <div className="flex gap-0 mb-6 border-[3px] border-[#1a1a1a]">
                         {tabs.map((tab) => (
@@ -287,6 +308,11 @@ export default function DemoSection() {
 
                             {fetchState.status === "success" && fetchState.result && (
                                 <div className="mt-6 space-y-6">
+                                    {fetchState.result.query && (
+                                        <div className="p-3 bg-[#fef08a] border-[3px] border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] text-sm font-bold text-[#1a1a1a]">
+                                            🔎 Personalized for: <span className="font-extrabold">&quot;{fetchState.result.query}&quot;</span>
+                                        </div>
+                                    )}
                                     {/* Stats Grid */}
                                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                                         <div className="text-center p-3 bg-[#c4b5fd] border-[3px] border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a]">

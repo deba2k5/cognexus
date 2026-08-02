@@ -4,7 +4,10 @@
  * Manages API communication and extension lifecycle.
  */
 
-const API_URL = 'http://localhost:8000';
+// Production backend by default. For local development against a
+// `uvicorn server:app` instance, change this to 'http://localhost:8000'
+// (and add the matching host_permissions entry in manifest.json).
+const API_URL = 'https://cognexus-uvwl.vercel.app';
 
 // On install, check API status
 chrome.runtime.onInstalled.addListener(() => {

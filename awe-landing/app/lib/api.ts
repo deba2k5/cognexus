@@ -49,6 +49,7 @@ export interface DemoResult {
     status: string;
     message: string;
     url: string;
+    query?: string;
     data: Record<string, unknown>[];
     stats: {
         pages_visited: number;
@@ -202,15 +203,16 @@ class AWEApiClient {
     }
 
     /**
-     * Run a quick demo exploration
+     * Run a quick demo exploration. Pass `query` to personalize extraction
+     * to only the information the user is searching for on that page.
      */
-    async runDemo(url: string): Promise<DemoResult> {
+    async runDemo(url: string, query?: string): Promise<DemoResult> {
         const response = await fetch(`${this.baseUrl}/demo`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ url, quick_mode: true }),
+            body: JSON.stringify({ url, quick_mode: true, query: query || undefined }),
         });
 
         if (!response.ok) {

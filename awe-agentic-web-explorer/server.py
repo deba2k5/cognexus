@@ -6,6 +6,7 @@ FastAPI server exposing AWE functionality as REST API endpoints.
 
 import asyncio
 import os
+import sys
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -21,6 +22,16 @@ try:
     load_dotenv()
 except ImportError:
     pass
+
+# Windows consoles default to cp1252, which cannot encode the emoji used in
+# startup logs below — reconfigure stdout/stderr to UTF-8 so the server
+# doesn't crash on startup.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
 
 
 # =============================================================================
@@ -88,6 +99,10 @@ class DemoRequest(BaseModel):
     """Request for demo exploration."""
     url: str
     quick_mode: bool = True
+    query: Optional[str] = Field(
+        default=None,
+        description="Optional search query describing what to personally extract, e.g. 'pricing plans' or 'contact emails'"
+    )
 
 
 class SecurityScanRequest(BaseModel):
@@ -375,8 +390,15 @@ async def run_live_extraction(request: DemoRequest):
     Uses ToT reasoning when enabled for better accuracy with SLMs.
     """
     try:
-        objective = "Extract all relevant structured information from this page including names, titles, descriptions, prices, ratings, quotes, or any other key data points"
-        
+        if request.query and request.query.strip():
+            objective = (
+                f"Extract information specifically related to: {request.query.strip()}. "
+                "Only include items relevant to this search — names, titles, descriptions, "
+                "prices, ratings, quotes, or any other key data points that match it."
+            )
+        else:
+            objective = "Extract all relevant structured information from this page including names, titles, descriptions, prices, ratings, quotes, or any other key data points"
+
         if TOT_ENABLED:
             # Use Tree of Thought extraction
             from tot_extractor import extract_from_url_with_tot
@@ -393,6 +415,7 @@ async def run_live_extraction(request: DemoRequest):
                 "status": "success",
                 "message": "ToT extraction completed",
                 "url": result["url"],
+                "query": request.query,
                 "data": result["data"],
                 "stats": {
                     "pages_visited": 1,
@@ -422,6 +445,7 @@ async def run_live_extraction(request: DemoRequest):
                 "status": "success",
                 "message": "Live extraction completed",
                 "url": result["url"],
+                "query": request.query,
                 "data": result["data"],
                 "stats": {
                     "pages_visited": 1,
