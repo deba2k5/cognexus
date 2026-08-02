@@ -497,7 +497,7 @@ async def extract_from_url_with_tot(
             url=url,
             objective=objective,
         )
-        
+
         return {
             "url": url,
             "objective": objective,
@@ -516,6 +516,74 @@ async def extract_from_url_with_tot(
         # Fall back to simple extraction
         from extractor import extract_from_url
         return await extract_from_url(url, objective)
+
+
+async def extract_from_content_with_tot(
+    html: str,
+    url: str,
+    objective: str = "Extract all relevant structured information",
+    use_tot: bool = None,
+) -> Dict[str, Any]:
+    """
+    Same as extract_from_url_with_tot, but works on HTML the caller already
+    has (e.g. captured from a live browser tab by the Chrome extension's
+    content script) instead of re-fetching the URL server-side.
+
+    This matters for pages that are personalized, behind a login, or
+    rendered client-side — a blind server-side `httpx` fetch has no
+    session/cookies and no JS engine, so it often sees a login wall, a bot
+    challenge, or an empty shell where the real content would be.
+    """
+    from extractor import extract_text_content
+
+    text_content = extract_text_content(html)
+
+    if use_tot is None:
+        use_tot = TOT_ENABLED
+
+    if use_tot:
+        result = await extract_with_tot(
+            content=text_content,
+            url=url,
+            objective=objective,
+        )
+
+        return {
+            "url": url,
+            "objective": objective,
+            "data": result["data"],
+            "metadata": {
+                "model": MODEL_NAME,
+                "tot_enabled": True,
+                "thoughts_generated": result["thoughts_generated"],
+                "thoughts_tried": result["thoughts_tried"],
+                "best_strategy": result.get("best_strategy"),
+                "all_strategies": result.get("all_strategies", []),
+                "duration_seconds": result.get("duration_seconds", 0),
+            },
+        }
+    else:
+        from extractor import extract_with_groq
+        import time
+
+        start_time = time.time()
+        extraction = await extract_with_groq(
+            text_content=text_content,
+            url=url,
+            objective=objective,
+        )
+        return {
+            "url": url,
+            "objective": objective,
+            "data": extraction["data"],
+            "metadata": {
+                "model": extraction["model"],
+                "tokens_used": extraction["tokens_used"],
+                "tot_enabled": False,
+                "content_length": len(text_content),
+                "duration_seconds": round(time.time() - start_time, 2),
+            },
+        }
 
 
 # =============================================================================

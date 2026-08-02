@@ -103,6 +103,16 @@ class DemoRequest(BaseModel):
         default=None,
         description="Optional search query describing what to personally extract, e.g. 'pricing plans' or 'contact emails'"
     )
+    html: Optional[str] = Field(
+        default=None,
+        description=(
+            "Optional pre-fetched page HTML, e.g. captured live from the "
+            "browser tab by the Chrome extension. When provided, the server "
+            "extracts from this directly instead of re-fetching the URL "
+            "itself — required for pages that are personalized, "
+            "behind a login, or rendered client-side."
+        ),
+    )
 
 
 class SecurityScanRequest(BaseModel):
@@ -399,65 +409,62 @@ async def run_live_extraction(request: DemoRequest):
         else:
             objective = "Extract all relevant structured information from this page including names, titles, descriptions, prices, ratings, quotes, or any other key data points"
 
-        if TOT_ENABLED:
-            # Use Tree of Thought extraction
+        if request.html:
+            # Extension already captured the live, rendered DOM from the
+            # browser tab — extract from that instead of blindly re-fetching
+            # the URL server-side (which has no session/cookies/JS and would
+            # miss personalized or client-rendered content).
+            from tot_extractor import extract_from_content_with_tot
+
+            result = await extract_from_content_with_tot(
+                html=request.html,
+                url=request.url,
+                objective=objective,
+                use_tot=TOT_ENABLED,
+            )
+        elif TOT_ENABLED:
             from tot_extractor import extract_from_url_with_tot
-            
+
             result = await extract_from_url_with_tot(
                 url=request.url,
                 objective=objective,
                 use_tot=True,
             )
-            
-            metadata = result.get("metadata", {})
-            
-            return {
-                "status": "success",
-                "message": "ToT extraction completed",
-                "url": result["url"],
-                "query": request.query,
-                "data": result["data"],
-                "stats": {
-                    "pages_visited": 1,
-                    "items_extracted": len(result["data"]),
-                    "duration_ms": int(metadata.get("duration_seconds", 0) * 1000),
-                    "model": metadata.get("model", MODEL_NAME),
-                    "tot_enabled": True,
-                    "thoughts_generated": metadata.get("thoughts_generated", 0),
-                    "thoughts_tried": metadata.get("thoughts_tried", 0),
-                },
-                "tot_info": {
-                    "best_strategy": metadata.get("best_strategy"),
-                    "all_strategies": metadata.get("all_strategies", []),
-                },
-            }
         else:
-            # Use simple extraction
             from extractor import extract_from_url
-            
+
             result = await extract_from_url(
                 url=request.url,
                 objective=objective,
                 target_fields=None,
             )
-            
-            return {
-                "status": "success",
-                "message": "Live extraction completed",
-                "url": result["url"],
-                "query": request.query,
-                "data": result["data"],
-                "stats": {
-                    "pages_visited": 1,
-                    "items_extracted": len(result["data"]),
-                    "duration_ms": int(result["metadata"]["duration_seconds"] * 1000),
-                    "model": result["metadata"]["model"],
-                    "tokens_used": result["metadata"]["tokens_used"],
-                    "tot_enabled": False,
-                },
-                "links": result.get("links", []),
-            }
-        
+
+        metadata = result.get("metadata", {})
+        tot_enabled = bool(metadata.get("tot_enabled"))
+
+        return {
+            "status": "success",
+            "message": "ToT extraction completed" if tot_enabled else "Live extraction completed",
+            "url": result["url"],
+            "query": request.query,
+            "data": result["data"],
+            "stats": {
+                "pages_visited": 1,
+                "items_extracted": len(result["data"]),
+                "duration_ms": int(metadata.get("duration_seconds", 0) * 1000),
+                "model": metadata.get("model", MODEL_NAME),
+                "tokens_used": metadata.get("tokens_used"),
+                "tot_enabled": tot_enabled,
+                "thoughts_generated": metadata.get("thoughts_generated", 0),
+                "thoughts_tried": metadata.get("thoughts_tried", 0),
+            },
+            "tot_info": {
+                "best_strategy": metadata.get("best_strategy"),
+                "all_strategies": metadata.get("all_strategies", []),
+            } if tot_enabled else None,
+            "links": result.get("links", []),
+        }
+
     except Exception as e:
         import traceback
         traceback.print_exc()

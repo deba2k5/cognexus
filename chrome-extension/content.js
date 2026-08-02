@@ -10,7 +10,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const pageData = {
             url: window.location.href,
             title: document.title,
-            html: document.documentElement.outerHTML,
+            html: document.documentElement.outerHTML.substring(0, 500000),
             text: document.body?.innerText?.substring(0, 50000) || '',
             meta: getMetaData(),
             links: getPageLinks(),

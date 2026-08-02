@@ -42,10 +42,13 @@ function initTabs() {
 // Get Current Tab URL
 // ============================
 
+let currentTabId = null;
+
 async function getCurrentTab() {
     try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tab?.url) {
+            currentTabId = tab.id;
             document.getElementById('currentUrl').textContent = tab.url;
             document.getElementById('currentUrl').title = tab.url;
         }
@@ -56,6 +59,22 @@ async function getCurrentTab() {
 
 function getUrl() {
     return document.getElementById('currentUrl').textContent;
+}
+
+// Pull the live, rendered page HTML straight from the tab via the content
+// script. This is what makes extraction work on personalized/logged-in/
+// JS-rendered pages — the backend's own server-side fetch has no session
+// and no JS engine, so it can't see that content on its own.
+async function getLivePageHtml() {
+    if (!currentTabId) return null;
+    try {
+        const pageData = await chrome.tabs.sendMessage(currentTabId, { type: 'GET_PAGE_DATA' });
+        return pageData?.html || null;
+    } catch {
+        // Content script isn't available on this page (e.g. chrome:// URLs,
+        // the Chrome Web Store, or a page open before the extension loaded).
+        return null;
+    }
 }
 
 // ============================
@@ -106,10 +125,12 @@ async function runExtraction() {
     const container = document.getElementById('extractResults');
 
     try {
+        const html = await getLivePageHtml();
+
         const res = await fetch(`${API_URL}/demo`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url, quick_mode: true, query: query || undefined }),
+            body: JSON.stringify({ url, quick_mode: true, query: query || undefined, html: html || undefined }),
         });
         const data = await res.json();
 
