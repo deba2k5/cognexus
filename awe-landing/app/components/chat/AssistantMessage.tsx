@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import {
   Brain, ChevronDown, ChevronRight, Copy, Check, Download, ShieldAlert, Workflow, Sparkles,
+  RefreshCcw, FileDown, FileText,
 } from "lucide-react";
 import Markdown from "./Markdown";
 import ArtifactsView from "./Artifacts";
@@ -99,7 +100,12 @@ function ReasoningPanel({ r, selectedId }: { r: NonNullable<ChatResponse["reason
   );
 }
 
-export default function AssistantMessage({ res, ask, isLast }: { res: ChatResponse; ask: Ask; isLast: boolean }) {
+export default function AssistantMessage({ res, ask, isLast, onRegenerate }: {
+  res: ChatResponse;
+  ask: Ask;
+  isLast: boolean;
+  onRegenerate?: () => void;
+}) {
   const [sel, setSel] = useState(0);
   const [copied, setCopied] = useState(false);
   const [why, setWhy] = useState(false);
@@ -171,20 +177,47 @@ export default function AssistantMessage({ res, ask, isLast }: { res: ChatRespon
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-          <button className="btn-ghost !py-1 !px-2 !text-[12px]" onClick={() => {
+        <div className="msg-actions flex items-center gap-0.5 mt-2">
+          <button className="icon-btn" title={copied ? "Copied" : "Copy answer"} aria-label="Copy answer" onClick={() => {
             navigator.clipboard?.writeText(answer);
             setCopied(true);
             setTimeout(() => setCopied(false), 1500);
           }}>
-            {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? "Copied" : "Copy"}
+            {copied ? <Check size={15} /> : <Copy size={15} />}
           </button>
-          {res.documents.map((d) => (
-            <button key={d.name} className="btn-ghost !py-1 !px-2 !text-[12px]" onClick={() => downloadDocument(d)}>
-              <Download size={12} /> {d.name}
+          <button className="icon-btn" title="Download answer (.md)" aria-label="Download answer" onClick={() => downloadDocument({
+            name: `${res.site?.domain || "cognexus"}-answer.md`, mime: "text/markdown", content: answer,
+          })}>
+            <FileDown size={15} />
+          </button>
+          {onRegenerate && (
+            <button className="icon-btn" title="Regenerate" aria-label="Regenerate" onClick={onRegenerate}>
+              <RefreshCcw size={15} />
             </button>
-          ))}
+          )}
+          {current && opts.length > 1 && (
+            <span className="ml-2 text-[11.5px]" style={{ color: "var(--c-faint)" }}>
+              Showing option {current.rank} of {opts.length}
+            </span>
+          )}
         </div>
+
+        {res.documents.length > 0 && (
+          <div className="grid sm:grid-cols-2 gap-2 mt-3">
+            {res.documents.map((d) => (
+              <button key={d.name} className="file-card" onClick={() => downloadDocument(d)}>
+                <span className="file-icon"><FileText size={16} /></span>
+                <span className="min-w-0 flex-1 text-left">
+                  <span className="block text-[13px] font-medium truncate">{d.name}</span>
+                  <span className="block text-[11px]" style={{ color: "var(--c-faint)" }}>
+                    {d.name.split(".").pop()?.toUpperCase()} · {(new Blob([d.content]).size / 1024).toFixed(1)} KB
+                  </span>
+                </span>
+                <Download size={15} style={{ color: "var(--c-muted)" }} />
+              </button>
+            ))}
+          </div>
+        )}
 
         {Object.keys(res.artifacts || {}).length > 0 && (
           <div className="mt-4"><ArtifactsView artifacts={res.artifacts} ask={ask} /></div>
