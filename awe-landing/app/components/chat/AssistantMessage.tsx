@@ -109,7 +109,7 @@ export default function AssistantMessage({ res, ask, isLast }: { res: ChatRespon
 
   return (
     <div className="flex gap-3 fade-in" data-role="assistant">
-      <div className="avatar logo-mark mt-0.5"><Image src="/cognexus-mark.png" alt="CogNexus" width={64} height={64} className="w-full h-full object-cover" /></div>
+      <div className="avatar logo-mark mt-0.5"><Image src="/brand/cognexus-mark.png" alt="CogNexus" width={64} height={64} className="w-full h-full object-cover" /></div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <span className="font-semibold text-[14px]">CogNexus</span>

@@ -75,7 +75,7 @@ function Thinking({ strategy, cached }: { strategy: Strategy; cached: boolean })
   const stage = [...STAGES].reverse().find(([t]) => elapsed + offset >= t)?.[1] ?? STAGES[0][1];
   return (
     <div className="flex gap-3 fade-in">
-      <div className="avatar logo-mark"><Image src="/cognexus-mark.png" alt="CogNexus" width={64} height={64} className="w-full h-full object-cover" /></div>
+      <div className="avatar logo-mark"><Image src="/brand/cognexus-mark.png" alt="CogNexus" width={64} height={64} className="w-full h-full object-cover" /></div>
       <div className="flex items-center gap-3 pt-1.5">
         <span className="pulse-dot" />
         <span className="shimmer-text text-[14px] font-medium">{stage}…</span>
@@ -265,7 +265,7 @@ export default function ChatApp() {
       <aside className={`chat-sidebar glass-strong ${sidebarOpen ? "open" : ""}`}>
         <div className="flex items-center justify-between px-4 pt-4 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="avatar logo-mark !w-9 !h-9"><Image src="/cognexus-mark.png" alt="CogNexus" width={64} height={64} className="w-full h-full object-cover" /></div>
+            <div className="avatar logo-mark !w-9 !h-9"><Image src="/brand/cognexus-mark.png" alt="CogNexus" width={64} height={64} className="w-full h-full object-cover" /></div>
             <div>
               <div className="font-bold text-[15px] leading-tight">CogNexus</div>
               <div className="text-[10.5px] uppercase tracking-widest" style={{ color: "var(--c-faint)" }}>Website deep research</div>
@@ -331,7 +331,7 @@ export default function ChatApp() {
         {empty ? (
           <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-4 pb-10">
             <div className="w-full max-w-2xl flex flex-col items-center text-center">
-              <Image src="/cognexus-logo.png" alt="CogNexus" width={171} height={142} priority className="logo-hero mb-6" />
+              <Image src="/brand/cognexus-logo.png" alt="CogNexus" width={168} height={168} priority className="logo-hero mb-6" />
               <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">Which website should we research?</h1>
               <p className="text-[15px] mb-8 max-w-xl" style={{ color: "var(--c-muted)" }}>
                 Paste a link and CogNexus agents crawl it, map its internal structure, audit its security, find similar sites,

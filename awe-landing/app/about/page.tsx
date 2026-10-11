@@ -222,11 +222,11 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-3 relative z-[60]">
             <Image
-              src="/cognexus-mark.png"
+              src="/brand/cognexus-mark.png"
               alt="CogNexus Logo"
               width={40}
               height={40}
-              className="logo-glow sm:w-[44px] sm:h-[44px]"
+              className="logo-glow rounded-full sm:w-[44px] sm:h-[44px]"
             />
             <div className="flex flex-col">
               <span className="text-lg sm:text-xl font-extrabold tracking-tight text-[#1a1a1a]">CogNexus</span>
@@ -309,13 +309,13 @@ export default function Home() {
           {/* Logo Large */}
           <motion.div variants={itemVariants} className="mb-8 flex justify-center">
             <div className="hero-logo-container">
-              <div className="inline-block bg-[#c4b5fd] border-4 border-[#1a1a1a] p-3 sm:p-4 shadow-[8px_8px_0px_#1a1a1a]">
+              <div className="inline-block rounded-full bg-[#c4b5fd] border-4 border-[#1a1a1a] p-3 sm:p-4 shadow-[8px_8px_0px_#1a1a1a]">
                 <Image
-                  src="/cognexus-mark.png"
+                  src="/brand/cognexus-mark.png"
                   alt="CogNexus Web Extractor"
                   width={90}
                   height={90}
-                  className="float sm:w-[120px] sm:h-[120px]"
+                  className="float rounded-full sm:w-[120px] sm:h-[120px]"
                   priority
                 />
               </div>
@@ -598,13 +598,13 @@ export default function Home() {
             className="animated-border p-8 sm:p-12 text-center"
           >
             <div className="mb-6 flex justify-center">
-              <div className="bg-[#c4b5fd] border-3 border-[#1a1a1a] p-3 shadow-[4px_4px_0px_#1a1a1a] inline-block" style={{ border: '3px solid #1a1a1a', boxShadow: '4px 4px 0px #1a1a1a' }}>
+              <div className="bg-[#c4b5fd] border-3 border-[#1a1a1a] p-3 shadow-[4px_4px_0px_#1a1a1a] inline-block rounded-full" style={{ border: '3px solid #1a1a1a', boxShadow: '4px 4px 0px #1a1a1a' }}>
                 <Image
-                  src="/cognexus-mark.png"
+                  src="/brand/cognexus-mark.png"
                   alt="CogNexus"
                   width={56}
                   height={56}
-                  className="sm:w-[64px] sm:h-[64px]"
+                  className="rounded-full sm:w-[64px] sm:h-[64px]"
                 />
               </div>
             </div>
@@ -645,11 +645,11 @@ export default function Home() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
           <div className="flex items-center gap-3">
             <Image
-              src="/cognexus-mark.png"
+              src="/brand/cognexus-mark.png"
               alt="CogNexus"
               width={28}
               height={28}
-              className="sm:w-[32px] sm:h-[32px]"
+              className="rounded-full sm:w-[32px] sm:h-[32px]"
             />
             <span className="font-extrabold text-[#1a1a1a] text-sm sm:text-base">CogNexus Web Extractor</span>
           </div>
