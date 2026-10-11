@@ -222,7 +222,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-3 relative z-[60]">
             <Image
-              src="/cognexus-logo.png"
+              src="/cognexus-mark.png"
               alt="CogNexus Logo"
               width={40}
               height={40}
@@ -311,7 +311,7 @@ export default function Home() {
             <div className="hero-logo-container">
               <div className="inline-block bg-[#c4b5fd] border-4 border-[#1a1a1a] p-3 sm:p-4 shadow-[8px_8px_0px_#1a1a1a]">
                 <Image
-                  src="/cognexus-logo.png"
+                  src="/cognexus-mark.png"
                   alt="CogNexus Web Extractor"
                   width={90}
                   height={90}
@@ -600,7 +600,7 @@ export default function Home() {
             <div className="mb-6 flex justify-center">
               <div className="bg-[#c4b5fd] border-3 border-[#1a1a1a] p-3 shadow-[4px_4px_0px_#1a1a1a] inline-block" style={{ border: '3px solid #1a1a1a', boxShadow: '4px 4px 0px #1a1a1a' }}>
                 <Image
-                  src="/cognexus-logo.png"
+                  src="/cognexus-mark.png"
                   alt="CogNexus"
                   width={56}
                   height={56}
@@ -645,7 +645,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
           <div className="flex items-center gap-3">
             <Image
-              src="/cognexus-logo.png"
+              src="/cognexus-mark.png"
               alt="CogNexus"
               width={28}
               height={28}
