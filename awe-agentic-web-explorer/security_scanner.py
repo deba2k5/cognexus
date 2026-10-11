@@ -244,25 +244,33 @@ async def check_broken_links(url: str, html: str, max_links: int = 20) -> Dict[s
     broken = 0
     checked = 0
 
-    async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
-        for link in links:
-            try:
-                resp = await client.head(link)
-                checked += 1
-                if resp.status_code >= 400:
-                    broken += 1
-                    result["items"].append({
-                        "severity": WARNING if resp.status_code == 404 else INFO,
-                        "message": f"Broken link (HTTP {resp.status_code})",
-                        "detail": link[:120]
-                    })
-            except Exception:
-                broken += 1
-                result["items"].append({
-                    "severity": WARNING,
-                    "message": "Unreachable link",
-                    "detail": link[:120]
-                })
+    async def probe(client: httpx.AsyncClient, link: str):
+        try:
+            return link, (await client.head(link)).status_code
+        except Exception:
+            return link, None
+
+    # Probe concurrently so large pages don't stall the scan
+    async with httpx.AsyncClient(follow_redirects=True, timeout=8) as client:
+        probes = await asyncio.gather(*(probe(client, link) for link in links))
+
+    for link, status in probes:
+        if status is None:
+            broken += 1
+            result["items"].append({
+                "severity": WARNING,
+                "message": "Unreachable link",
+                "detail": link[:120]
+            })
+            continue
+        checked += 1
+        if status >= 400:
+            broken += 1
+            result["items"].append({
+                "severity": WARNING if status == 404 else INFO,
+                "message": f"Broken link (HTTP {status})",
+                "detail": link[:120]
+            })
 
     if broken == 0:
         result["items"].append({
@@ -402,6 +410,56 @@ async def check_libraries(html: str) -> Dict[str, Any]:
 
 
 # =============================================================================
+# Remediation Fixes
+# =============================================================================
+
+# (pattern matched against the finding message, short fix, config snippet)
+FIX_RULES = [
+    (r"not using HTTPS", "Serve the site over HTTPS and redirect all HTTP traffic.",
+     "# nginx\nserver {\n  listen 80;\n  server_name example.com;\n  return 301 https://$host$request_uri;\n}\n# Free certificates: certbot --nginx -d example.com"),
+    (r"EXPIRED|expires in", "Renew the TLS certificate and enable automatic renewal.",
+     "certbot renew --dry-run\n# cron: 0 3 * * * certbot renew --quiet"),
+    (r"verification failed", "Install a certificate from a trusted CA that matches the hostname, including the full intermediate chain.",
+     "ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;\nssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;"),
+    (r"Outdated TLS", "Disable TLS 1.0/1.1 and allow only TLS 1.2+.",
+     "ssl_protocols TLSv1.2 TLSv1.3;\nssl_prefer_server_ciphers on;"),
+    (r"HSTS", "Add a Strict-Transport-Security header so browsers always use HTTPS.",
+     'add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;'),
+    (r"Content-Security-Policy", "Define a Content-Security-Policy to restrict where scripts, styles and frames can load from.",
+     "add_header Content-Security-Policy \"default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'self'; base-uri 'self'\" always;"),
+    (r"X-Frame-Options", "Prevent clickjacking by forbidding cross-origin framing.",
+     'add_header X-Frame-Options "SAMEORIGIN" always;\n# or in CSP: frame-ancestors \'self\''),
+    (r"X-Content-Type-Options", "Stop MIME-type sniffing.",
+     'add_header X-Content-Type-Options "nosniff" always;'),
+    (r"X-XSS-Protection", "Legacy header; rely on CSP, and set it to 0 to disable the buggy legacy auditor.",
+     'add_header X-XSS-Protection "0" always;'),
+    (r"Referrer-Policy", "Limit how much URL information is leaked to other sites.",
+     'add_header Referrer-Policy "strict-origin-when-cross-origin" always;'),
+    (r"Broken link|Unreachable link", "Update or remove the dead link, or add a 301 redirect to the new location.",
+     "location = /old-path { return 301 /new-path; }"),
+    (r"Mixed content", "Load every sub-resource over HTTPS (or protocol-relative) and upgrade insecure requests.",
+     "add_header Content-Security-Policy \"upgrade-insecure-requests\" always;"),
+    (r"exposed in source", "Revoke and rotate the credential immediately, remove it from client-side code, and keep secrets server-side in environment variables.",
+     "# .env (server only, never shipped to the browser)\nAPI_KEY=...\n# scan history: git log -p | grep -i 'api_key'"),
+    (r"Detected .* v", "Check this library version against known CVEs and upgrade to the latest patched release.",
+     "npm audit\nnpm install <library>@latest"),
+    (r"Could not check|Check failed", "Re-run the scan; the host may be blocking automated requests or timing out.", ""),
+]
+
+
+def attach_fixes(checks: List[Dict[str, Any]]) -> None:
+    """Attach a `fix` to every non-passing finding, in place."""
+    for check in checks:
+        for item in check.get("items", []):
+            if item.get("severity") == PASS or "fix" in item:
+                continue
+            for pattern, summary, snippet in FIX_RULES:
+                if re.search(pattern, item.get("message", ""), re.I):
+                    item["fix"] = {"summary": summary, "snippet": snippet}
+                    break
+
+
+# =============================================================================
 # Main Scanner
 # =============================================================================
 
@@ -462,6 +520,8 @@ async def scan_url(url: str, check_links: bool = True) -> Dict[str, Any]:
                 sev = item.get("severity", INFO)
                 if sev in summary:
                     summary[sev] += 1
+
+    attach_fixes(valid_checks)
 
     # Overall score (0-100)
     score = max(0, 100 - (summary["critical"] * 25) - (summary["warning"] * 10) - (summary["info"] * 2))

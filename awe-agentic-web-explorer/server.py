@@ -135,6 +135,21 @@ class StructureAnalysisRequest(BaseModel):
     url: str
 
 
+class ChatTurn(BaseModel):
+    role: str
+    content: str
+
+
+class ChatRequest(BaseModel):
+    """A message to the deep-research chat agent."""
+    message: str = Field(..., max_length=4000)
+    site_url: Optional[str] = Field(default=None, description="Website the conversation is about")
+    history: List[ChatTurn] = Field(default_factory=list)
+    strategy: Optional[str] = Field(default=None, description="Tree-of-Thought search: bfs, dfs or beam")
+    intent: Optional[str] = Field(default=None, description="Force an intent, e.g. security or similar")
+    depth: int = Field(default=2, ge=1, le=3)
+
+
 class HealthResponse(BaseModel):
     """Health check response."""
     status: str
@@ -479,6 +494,46 @@ async def run_live_extraction(request: DemoRequest):
                 "duration_ms": 0,
                 "tot_enabled": TOT_ENABLED,
             }
+        }
+
+
+# =============================================================================
+# Deep-Research Chat
+# =============================================================================
+
+CHAT_INTENTS = {"overview", "qa", "security", "structure", "similar", "compare", "extract", "report"}
+
+
+@app.post("/chat")
+async def chat(request: ChatRequest):
+    """
+    Website-scoped deep-research chat. Routes the message to specialised agents,
+    reasons with Tree-of-Thought (BFS / DFS / Beam) and returns ranked answer
+    options with confidence scores, artifacts and downloadable documents.
+    """
+    from research_agent import handle_chat
+
+    try:
+        return await handle_chat(
+            message=request.message,
+            site_url=request.site_url,
+            history=[t.model_dump() for t in request.history],
+            strategy=request.strategy,
+            intent_override=request.intent if request.intent in CHAT_INTENTS else None,
+            depth=request.depth,
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "intent": "error",
+            "message": f"Something went wrong while researching: {e}",
+            "options": [],
+            "artifacts": {},
+            "documents": [],
+            "suggestions": [],
+            "site": None,
+            "reasoning": None,
         }
 
 

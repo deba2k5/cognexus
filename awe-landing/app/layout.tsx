@@ -13,12 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AWE - Agentic Web Explorer | Autonomous Web Extraction Framework",
-  description: "A production-grade, generalizable multi-agent framework for autonomous web exploration and data extraction. Works with small language models through Tree of Thought reasoning.",
+  title: "CogNexus | Deep Research Chat for Any Website",
+  description: "Paste a website link and chat with a multi-agent researcher: grounded answers ranked by Tree-of-Thought confidence, internal structure, security audits with fixes, similar-site discovery and comparisons.",
   keywords: ["web scraping", "autonomous agents", "AI", "LLM", "data extraction", "Playwright", "web exploration"],
   openGraph: {
-    title: "AWE - Agentic Web Explorer",
-    description: "Autonomous web extraction at scale with Tree of Thought reasoning",
+    title: "CogNexus | Deep Research Chat for Any Website",
+    description: "Multi-agent, Tree-of-Thought deep research for any website",
     type: "website",
   },
 };

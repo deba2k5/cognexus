@@ -359,6 +359,16 @@ async def analyze_structure(url: str) -> Dict[str, Any]:
             "error": f"Failed to fetch page: {str(e)}",
         }
 
+    result = analyze_structure_html(html, url, status_code)
+    result["duration_seconds"] = round(time.time() - start, 2)
+    return result
+
+
+def analyze_structure_html(html: str, url: str, status_code: int = 200) -> Dict[str, Any]:
+    """Run the structure analysis on HTML that has already been fetched."""
+    import time
+    start = time.time()
+
     soup = BeautifulSoup(html, "html.parser")
 
     # Run all analyses
